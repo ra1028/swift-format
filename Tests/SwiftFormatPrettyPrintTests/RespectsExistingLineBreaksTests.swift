@@ -14,7 +14,8 @@ class RespectsExistingLineBreaksTests: PrettyPrintTestCase {
 
     let expectedRespecting =
       """
-      a = b + c
+      a =
+        b + c
         + d
         + e + f
         + g
@@ -28,7 +29,8 @@ class RespectsExistingLineBreaksTests: PrettyPrintTestCase {
 
     let expectedNotRespecting =
       """
-      a = b + c + d + e + f + g
+      a =
+        b + c + d + e + f + g
         + h + i
 
       """
@@ -191,7 +193,7 @@ class RespectsExistingLineBreaksTests: PrettyPrintTestCase {
   /// Creates a new configuration with the given value for `respectsExistingLineBreaks` and default
   /// values for everything else.
   private func configuration(respectingExistingLineBreaks: Bool) -> Configuration {
-    let config = Configuration()
+    var config = Configuration()
     config.respectsExistingLineBreaks = respectingExistingLineBreaks
     return config
   }

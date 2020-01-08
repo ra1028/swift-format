@@ -42,7 +42,7 @@ public class InitializerDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -86,7 +86,7 @@ public class InitializerDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -130,7 +130,7 @@ public class InitializerDeclTests: PrettyPrintTestCase {
 
       """
     
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -164,7 +164,7 @@ public class InitializerDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -216,7 +216,7 @@ public class InitializerDeclTests: PrettyPrintTestCase {
         let a = 123
         let b = "abc"
       }
-      public init<Elements: Collection, Element>(element: Element, in collection: Elements) where Elements.Element == Element, Element: Equatable {
+      public init<Elements: Collection, Element>(element: Element, in collection: Elements) where Elements.Element == Element, Element: P, Element: Equatable {
         let a = 123
         let b = "abc"
       }
@@ -235,7 +235,8 @@ public class InitializerDeclTests: PrettyPrintTestCase {
       public init<Elements: Collection, Element>(
         element: Element, in collection: Elements
       )
-      where Elements.Element == Element,
+      where
+        Elements.Element == Element, Element: P,
         Element: Equatable
       {
         let a = 123
@@ -245,8 +246,53 @@ public class InitializerDeclTests: PrettyPrintTestCase {
 
     """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
+  }
+
+  public func testInitializerWhereClause_lineBreakBeforeEachGenericRequirement() {
+    let input =
+    """
+    struct Struct {
+      public init<Elements: Collection, Element>(element: Element, in collection: Elements) where Elements.Element == Element {
+        let a = 123
+        let b = "abc"
+      }
+      public init<Elements: Collection, Element>(element: Element, in collection: Elements) where Elements.Element == Element, Element: P, Element: Equatable {
+        let a = 123
+        let b = "abc"
+      }
+    }
+    """
+
+    let expected =
+    """
+    struct Struct {
+      public init<Elements: Collection, Element>(
+        element: Element, in collection: Elements
+      ) where Elements.Element == Element {
+        let a = 123
+        let b = "abc"
+      }
+      public init<Elements: Collection, Element>(
+        element: Element, in collection: Elements
+      )
+      where
+        Elements.Element == Element,
+        Element: P,
+        Element: Equatable
+      {
+        let a = 123
+        let b = "abc"
+      }
+    }
+
+    """
+
+    var config = Configuration()
+    config.lineBreakBeforeEachArgument = false
+    config.lineBreakBeforeEachGenericRequirement = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
 
@@ -296,7 +342,7 @@ public class InitializerDeclTests: PrettyPrintTestCase {
     let input =
       """
       struct Struct {
-        @objc @inlinable public init<Elements: Collection, Element>(element: Element, in collection: Elements) where Elements.Element == Element, Element: Equatable {
+        @objc @inlinable public init<Elements: Collection, Element>(element: Element, in collection: Elements) where Elements.Element == Element, Element: Equatable, Element: P {
           let a = 123
           let b = "abc"
         }
@@ -306,14 +352,16 @@ public class InitializerDeclTests: PrettyPrintTestCase {
     let expected =
       """
       struct Struct {
-        @objc @inlinable public init<
+        @objc @inlinable
+        public init<
           Elements: Collection, Element
         >(
           element: Element,
           in collection: Elements
         )
-        where Elements.Element == Element,
-          Element: Equatable
+        where
+          Elements.Element == Element,
+          Element: Equatable, Element: P
         {
           let a = 123
           let b = "abc"
@@ -322,8 +370,47 @@ public class InitializerDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 40, configuration: config)
+  }
+
+  public func testInitializerFullWrap_lineBreakBeforeEachGenericRequirement() {
+    let input =
+    """
+      struct Struct {
+        @objc @inlinable public init<Elements: Collection, Element>(element: Element, in collection: Elements) where Elements.Element == Element, Element: Equatable, Element: P {
+          let a = 123
+          let b = "abc"
+        }
+      }
+      """
+
+    let expected =
+    """
+      struct Struct {
+        @objc @inlinable
+        public init<
+          Elements: Collection, Element
+        >(
+          element: Element,
+          in collection: Elements
+        )
+        where
+          Elements.Element == Element,
+          Element: Equatable,
+          Element: P
+        {
+          let a = 123
+          let b = "abc"
+        }
+      }
+
+      """
+
+    var config = Configuration()
+    config.lineBreakBeforeEachArgument = false
+    config.lineBreakBeforeEachGenericRequirement = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 40, configuration: config)
   }
 

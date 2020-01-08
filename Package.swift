@@ -1,4 +1,4 @@
-// swift-tools-version:4.2
+// swift-tools-version:5.1
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the Swift.org open source project
@@ -17,11 +17,12 @@ let package = Package(
   name: "swift-format",
   products: [
     .executable(name: "swift-format", targets: ["swift-format"]),
-    .library(name: "SwiftFormat", targets: ["SwiftFormat"]),
+    .library(name: "SwiftFormat", targets: ["SwiftFormat", "SwiftFormatConfiguration"]),
+    .library(name: "SwiftFormatConfiguration", targets: ["SwiftFormatConfiguration"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-package-manager.git", from: "0.4.0"),
     .package(url: "https://github.com/apple/swift-syntax", .exact("0.50100.0")),
+    .package(url: "https://github.com/apple/swift-tools-support-core.git", from: "0.0.1"),
   ],
   targets: [
     .target(
@@ -56,12 +57,16 @@ let package = Package(
     .target(
       name: "swift-format",
       dependencies: [
-        "SPMUtility",
         "SwiftFormat",
         "SwiftFormatConfiguration",
         "SwiftFormatCore",
         "SwiftSyntax",
+        "SwiftToolsSupport-auto",
       ]
+    ),
+    .testTarget(
+      name: "SwiftFormatConfigurationTests",
+      dependencies: ["SwiftFormatConfiguration"]
     ),
     .testTarget(
       name: "SwiftFormatRulesTests",

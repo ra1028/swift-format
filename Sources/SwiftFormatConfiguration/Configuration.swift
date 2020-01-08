@@ -17,7 +17,7 @@ import Foundation
 private let highestSupportedConfigurationVersion = 1
 
 /// Holds the complete set of configured values and defaults.
-public class Configuration: Codable {
+public struct Configuration: Codable, Equatable {
 
   private enum CodingKeys: CodingKey {
     case version
@@ -29,6 +29,8 @@ public class Configuration: Codable {
     case blankLineBetweenMembers
     case lineBreakBeforeControlFlowKeywords
     case lineBreakBeforeEachArgument
+    case lineBreakBeforeEachGenericRequirement
+    case prioritizeKeepingFunctionOutputTogether
     case indentConditionalCompilationBlocks
     case rules
   }
@@ -40,7 +42,7 @@ public class Configuration: Codable {
 
   /// The dictionary containing the rule names that we wish to run on. A rule is not used if it is
   /// marked as `false`, or if it is missing from the dictionary.
-  public var rules: [String: Bool] = [:]
+  public var rules: [String: Bool] = RuleRegistry.rules
 
   /// The maximum number of consecutive blank lines that may appear in a file.
   public var maximumBlankLines = 1
@@ -88,16 +90,33 @@ public class Configuration: Codable {
   /// each argument, forcing the entire argument list to be laid out vertically.
   public var lineBreakBeforeEachArgument = false
 
+  /// Determines the line-breaking behavior for generic requirements when the requirements list
+  /// is wrapped onto multiple lines.
+  ///
+  /// If true, a line break will be added before each requirement, forcing the entire requirements
+  /// list to be laid out vertically. If false (the default), requirements will be laid out
+  /// horizontally first, with line breaks only being fired when the line length would be exceeded.
+  public var lineBreakBeforeEachGenericRequirement = false
+
+  /// Determines if function-like declaration outputs should be prioritized to be together with the
+  /// function signature right (closing) parenthesis.
+  ///
+  /// If false (the default), function output (i.e. throws, return type) is not prioritized to be
+  /// together with the signature's right parenthesis, and when the line length would be exceeded,
+  /// a line break will be fired after the function signature first, indenting the declaration output
+  /// one additional level. If true, A line break will be fired further up in the function's
+  /// declaration (e.g. generic parameters, parameters) before breaking on the function's output.
+  public var prioritizeKeepingFunctionOutputTogether = false
+
   /// Determines the indentation behavior for `#if`, `#elseif`, and `#else`.
   public var indentConditionalCompilationBlocks = true
 
   /// Constructs a Configuration with all default values.
   public init() {
     self.version = highestSupportedConfigurationVersion
-    self.rules = RuleRegistry.rules
   }
 
-  public required init(from decoder: Decoder) throws {
+  public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
     // Unfortunately, to allow the user to leave out configuration options in the JSON, we would
@@ -129,13 +148,22 @@ public class Configuration: Codable {
       BlankLineBetweenMembersConfiguration.self, forKey: .blankLineBetweenMembers)
       ?? BlankLineBetweenMembersConfiguration()
     self.lineBreakBeforeControlFlowKeywords
-      = try container.decodeIfPresent(Bool.self, forKey: .lineBreakBeforeControlFlowKeywords)
-      ?? true
+      = try container.decodeIfPresent(Bool.self, forKey: .lineBreakBeforeControlFlowKeywords) ?? false
     self.lineBreakBeforeEachArgument
-      = try container.decodeIfPresent(Bool.self, forKey: .lineBreakBeforeEachArgument) ?? true
+      = try container.decodeIfPresent(Bool.self, forKey: .lineBreakBeforeEachArgument) ?? false
+    self.lineBreakBeforeEachGenericRequirement
+      = try container.decodeIfPresent(Bool.self, forKey: .lineBreakBeforeEachGenericRequirement) ?? false
+    self.prioritizeKeepingFunctionOutputTogether
+      = try container.decodeIfPresent(Bool.self, forKey: .prioritizeKeepingFunctionOutputTogether) ?? false
     self.indentConditionalCompilationBlocks
       = try container.decodeIfPresent(Bool.self, forKey: .indentConditionalCompilationBlocks) ?? true
-    self.rules = try container.decodeIfPresent([String: Bool].self, forKey: .rules) ?? [:]
+
+    // If the `rules` key is not present at all, default it to the built-in set
+    // so that the behavior is the same as if the configuration had been
+    // default-initialized. To get an empty rules dictionary, one can explicitly
+    // set the `rules` key to `{}`.
+    self.rules
+      = try container.decodeIfPresent([String: Bool].self, forKey: .rules) ?? RuleRegistry.rules
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -148,22 +176,27 @@ public class Configuration: Codable {
     try container.encode(indentation, forKey: .indentation)
     try container.encode(respectsExistingLineBreaks, forKey: .respectsExistingLineBreaks)
     try container.encode(blankLineBetweenMembers, forKey: .blankLineBetweenMembers)
-    try container.encode(
-      lineBreakBeforeControlFlowKeywords, forKey: .lineBreakBeforeControlFlowKeywords)
+    try container.encode(lineBreakBeforeControlFlowKeywords, forKey: .lineBreakBeforeControlFlowKeywords)
     try container.encode(lineBreakBeforeEachArgument, forKey: .lineBreakBeforeEachArgument)
+    try container.encode(lineBreakBeforeEachGenericRequirement, forKey: .lineBreakBeforeEachGenericRequirement)
+    try container.encode(prioritizeKeepingFunctionOutputTogether, forKey: .prioritizeKeepingFunctionOutputTogether)
     try container.encode(indentConditionalCompilationBlocks, forKey: .indentConditionalCompilationBlocks)
     try container.encode(rules, forKey: .rules)
   }
 }
 
 /// Configuration for the BlankLineBetweenMembers rule.
-public struct BlankLineBetweenMembersConfiguration: Codable {
+public struct BlankLineBetweenMembersConfiguration: Codable, Equatable {
   /// If true, blank lines are not required between single-line properties.
-  public let ignoreSingleLineProperties = true
+  public let ignoreSingleLineProperties: Bool
+
+  public init(ignoreSingleLineProperties: Bool = true) {
+    self.ignoreSingleLineProperties = ignoreSingleLineProperties
+  }
 }
 
 /// Configuration for the NoPlaygroundLiterals rule.
-public struct NoPlaygroundLiteralsConfiguration: Codable {
+public struct NoPlaygroundLiteralsConfiguration: Codable, Equatable {
   public enum ResolveBehavior: String, Codable {
     /// If not sure, use `UIColor` to replace `#colorLiteral`.
     case useUIColor

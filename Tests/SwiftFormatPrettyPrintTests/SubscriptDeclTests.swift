@@ -79,7 +79,7 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -121,7 +121,7 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -133,7 +133,7 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
         subscript<Elements: Collection, Element>(var1: Element, var2: Elements) -> Double where Elements.Element == Element {
           return 1.23
         }
-        subscript<Elements: Collection, Element>(var1: Element, var2: Elements) -> Double where Elements.Element == Element, Element: Equatable {
+        subscript<Elements: Collection, Element>(var1: Element, var2: Elements) -> Double where Elements.Element == Element, Element: Equatable, Element: P {
           return 1.23
         }
       }
@@ -150,8 +150,9 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
         subscript<Elements: Collection, Element>(
           var1: Element, var2: Elements
         ) -> Double
-        where Elements.Element == Element,
-          Element: Equatable
+        where
+          Elements.Element == Element,
+          Element: Equatable, Element: P
         {
           return 1.23
         }
@@ -159,8 +160,49 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
+  }
+
+  public func testSubscriptGenericWhere_lineBreakBeforeEachGenericRequirement() {
+    let input =
+    """
+      struct MyStruct {
+        subscript<Elements: Collection, Element>(var1: Element, var2: Elements) -> Double where Elements.Element == Element {
+          return 1.23
+        }
+        subscript<Elements: Collection, Element>(var1: Element, var2: Elements) -> Double where Elements.Element == Element, Element: Equatable, Element: P {
+          return 1.23
+        }
+      }
+      """
+
+    let expected =
+    """
+      struct MyStruct {
+        subscript<Elements: Collection, Element>(
+          var1: Element, var2: Elements
+        ) -> Double where Elements.Element == Element {
+          return 1.23
+        }
+        subscript<Elements: Collection, Element>(
+          var1: Element, var2: Elements
+        ) -> Double
+        where
+          Elements.Element == Element,
+          Element: Equatable,
+          Element: P
+        {
+          return 1.23
+        }
+      }
+
+      """
+
+    var config = Configuration()
+    config.lineBreakBeforeEachArgument = false
+    config.lineBreakBeforeEachGenericRequirement = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
 
@@ -219,12 +261,126 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 70)
   }
 
+  public func testBreaksBeforeOrInsideOutput() {
+    let input =
+    """
+      protocol MyProtocol {
+        subscript<R>(index: Int) -> R
+      }
+
+      struct MyStruct {
+        subscript<R>(index: Int) -> R {
+          statement
+          statement
+        }
+      }
+      """
+
+    var expected =
+    """
+      protocol MyProtocol {
+        subscript<R>(index: Int)
+          -> R
+      }
+
+      struct MyStruct {
+        subscript<R>(index: Int)
+          -> R
+        {
+          statement
+          statement
+        }
+      }
+
+      """
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 26)
+
+    expected =
+    """
+    protocol MyProtocol {
+      subscript<R>(index: Int)
+        -> R
+    }
+
+    struct MyStruct {
+      subscript<R>(index: Int)
+        -> R
+      {
+        statement
+        statement
+      }
+    }
+
+    """
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 27)
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 30)
+  }
+
+  public func testBreaksBeforeOrInsideOutput_prioritizingKeepingOutputTogether() {
+    let input =
+    """
+      protocol MyProtocol {
+        subscript<R>(index: Int) -> R
+      }
+
+      struct MyStruct {
+        subscript<R>(index: Int) -> R {
+          statement
+          statement
+        }
+      }
+      """
+
+    var expected =
+    """
+      protocol MyProtocol {
+        subscript<R>(
+          index: Int
+        ) -> R
+      }
+
+      struct MyStruct {
+        subscript<R>(
+          index: Int
+        ) -> R {
+          statement
+          statement
+        }
+      }
+
+      """
+    var config = Configuration()
+    config.prioritizeKeepingFunctionOutputTogether = true
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 26, configuration: config)
+
+    expected =
+    """
+    protocol MyProtocol {
+      subscript<R>(
+        index: Int
+      ) -> R
+    }
+
+    struct MyStruct {
+      subscript<R>(
+        index: Int
+      ) -> R {
+        statement
+        statement
+      }
+    }
+
+    """
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 27, configuration: config)
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 30, configuration: config)
+  }
+
   public func testSubscriptFullWrap() {
     let input =
     """
     struct MyStruct {
       @discardableResult @objc
-      subscript<ManyElements: Collection, Element>(var1: Element, var2: ManyElements) -> ManyElements.Index? where ManyElements.Element == Element, Element: Equatable {
+      subscript<ManyElements: Collection, Element>(var1: Element, var2: ManyElements) -> ManyElements.Index? where Element: Foo, Element: Bar, ManyElements.Element == Element {
         get {
           let out = vals[var1][var2]
           return out
@@ -249,9 +405,9 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
         var2: ManyElements
       ) -> ManyElements.Index?
       where
+        Element: Foo, Element: Bar,
         ManyElements.Element
-          == Element,
-        Element: Equatable
+          == Element
       {
         get {
           let out = vals[var1][var2]
@@ -267,6 +423,59 @@ public class SubscriptDeclTests: PrettyPrintTestCase {
     """
 
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 34)
+  }
+
+  public func testSubscriptFullWrap_lineBreakBeforeEachGenericRequirement() {
+    let input =
+    """
+    struct MyStruct {
+      @discardableResult @objc
+      subscript<ManyElements: Collection, Element>(var1: Element, var2: ManyElements) -> ManyElements.Index? where Element: Foo, Element: Bar, ManyElements.Element == Element {
+        get {
+          let out = vals[var1][var2]
+          return out
+        }
+        set(newValue) {
+          let tmp = compute(newValue)
+          vals[var1][var2] = tmp
+        }
+      }
+    }
+    """
+
+    let expected =
+    """
+    struct MyStruct {
+      @discardableResult @objc
+      subscript<
+        ManyElements: Collection,
+        Element
+      >(
+        var1: Element,
+        var2: ManyElements
+      ) -> ManyElements.Index?
+      where
+        Element: Foo,
+        Element: Bar,
+        ManyElements.Element
+          == Element
+      {
+        get {
+          let out = vals[var1][var2]
+          return out
+        }
+        set(newValue) {
+          let tmp = compute(newValue)
+          vals[var1][var2] = tmp
+        }
+      }
+    }
+
+    """
+
+    var config = Configuration()
+    config.lineBreakBeforeEachGenericRequirement = true
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 34, configuration: config)
   }
 
   public func testEmptySubscript() {

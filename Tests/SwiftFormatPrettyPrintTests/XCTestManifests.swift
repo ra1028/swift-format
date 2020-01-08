@@ -43,7 +43,8 @@ extension AssignmentExprTests {
     // to regenerate.
     static let __allTests__AssignmentExprTests = [
         ("testAssignmentExprsWithGroupedOperators", testAssignmentExprsWithGroupedOperators),
-        ("testAssignmentFromFunctionCalls", testAssignmentFromFunctionCalls),
+        ("testAssignmentOperatorFromSequenceWithFunctionCalls", testAssignmentOperatorFromSequenceWithFunctionCalls),
+        ("testAssignmentPatternBindingFromSequenceWithFunctionCalls", testAssignmentPatternBindingFromSequenceWithFunctionCalls),
         ("testBasicAssignmentExprs", testBasicAssignmentExprs),
     ]
 }
@@ -89,7 +90,12 @@ extension BinaryOperatorExprTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__BinaryOperatorExprTests = [
-        ("testOperatorSpacing", testOperatorSpacing),
+        ("testNonRangeFormationOperatorsAreSurroundedByBreaks", testNonRangeFormationOperatorsAreSurroundedByBreaks),
+        ("testRangeFormationOperatorsAreCompactedWhenPossible", testRangeFormationOperatorsAreCompactedWhenPossible),
+        ("testRangeFormationOperatorsAreNotCompactedWhenFollowingAPostfixOperator", testRangeFormationOperatorsAreNotCompactedWhenFollowingAPostfixOperator),
+        ("testRangeFormationOperatorsAreNotCompactedWhenPrecedingAPrefixOperator", testRangeFormationOperatorsAreNotCompactedWhenPrecedingAPrefixOperator),
+        ("testRangeFormationOperatorsAreNotCompactedWhenPrecedingPrefixDot", testRangeFormationOperatorsAreNotCompactedWhenPrecedingPrefixDot),
+        ("testRangeFormationOperatorsAreNotCompactedWhenUnaryOperatorsAreOnEachSide", testRangeFormationOperatorsAreNotCompactedWhenUnaryOperatorsAreOnEachSide),
     ]
 }
 
@@ -101,9 +107,12 @@ extension ClassDeclTests {
         ("testBasicClassDeclarations", testBasicClassDeclarations),
         ("testClassAttributes", testClassAttributes),
         ("testClassFullWrap", testClassFullWrap),
-        ("testClassInheritence", testClassInheritence),
+        ("testClassFullWrap_lineBreakAfterGenericWhereClause", testClassFullWrap_lineBreakAfterGenericWhereClause),
+        ("testClassInheritance", testClassInheritance),
         ("testClassWhereClause", testClassWhereClause),
-        ("testClassWhereClauseWithInheritence", testClassWhereClauseWithInheritence),
+        ("testClassWhereClause_lineBreakAfterGenericWhereClause", testClassWhereClause_lineBreakAfterGenericWhereClause),
+        ("testClassWhereClauseWithInheritance", testClassWhereClauseWithInheritance),
+        ("testClassWhereClauseWithInheritance_lineBreakAfterGenericWhereClause", testClassWhereClauseWithInheritance_lineBreakAfterGenericWhereClause),
         ("testEmptyClass", testEmptyClass),
         ("testEmptyClassWithComment", testEmptyClassWithComment),
         ("testGenericClassDeclarations_noPackArguments", testGenericClassDeclarations_noPackArguments),
@@ -176,9 +185,12 @@ extension EnumDeclTests {
         ("testEmptyEnumWithComment", testEmptyEnumWithComment),
         ("testEnumAttributes", testEnumAttributes),
         ("testEnumFullWrap", testEnumFullWrap),
-        ("testEnumInheritence", testEnumInheritence),
+        ("testEnumFullWrap_lineBreakBeforeEachGenericRequirement", testEnumFullWrap_lineBreakBeforeEachGenericRequirement),
+        ("testEnumInheritance", testEnumInheritance),
         ("testEnumWhereClause", testEnumWhereClause),
-        ("testEnumWhereClauseWithInheritence", testEnumWhereClauseWithInheritence),
+        ("testEnumWhereClause_lineBreakBeforeEachGenericRequirement", testEnumWhereClause_lineBreakBeforeEachGenericRequirement),
+        ("testEnumWhereClauseWithInheritance", testEnumWhereClauseWithInheritance),
+        ("testEnumWhereClauseWithInheritance_lineBreakBeforeEachGenericRequirement", testEnumWhereClauseWithInheritance_lineBreakBeforeEachGenericRequirement),
         ("testGenericEnumDeclarations", testGenericEnumDeclarations),
         ("testIndirectEnum", testIndirectEnum),
         ("testMixedEnumCaseStyles_noPackArguments", testMixedEnumCaseStyles_noPackArguments),
@@ -197,9 +209,12 @@ extension ExtensionDeclTests {
         ("testEmptyExtensionWithComment", testEmptyExtensionWithComment),
         ("testExtensionAttributes", testExtensionAttributes),
         ("testExtensionFullWrap", testExtensionFullWrap),
-        ("testExtensionInheritence", testExtensionInheritence),
+        ("testExtensionFullWrap_lineBreakBeforeEachGenericRequirement", testExtensionFullWrap_lineBreakBeforeEachGenericRequirement),
+        ("testExtensionInheritance", testExtensionInheritance),
         ("testExtensionWhereClause", testExtensionWhereClause),
-        ("testExtensionWhereClauseWithInheritence", testExtensionWhereClauseWithInheritence),
+        ("testExtensionWhereClause_lineBreakBeforeEachGenericRequirement", testExtensionWhereClause_lineBreakBeforeEachGenericRequirement),
+        ("testExtensionWhereClauseWithInheritance", testExtensionWhereClauseWithInheritance),
+        ("testExtensionWhereClauseWithInheritance_lineBreakBeforeEachGenericRequirement", testExtensionWhereClauseWithInheritance_lineBreakBeforeEachGenericRequirement),
         ("testOneMemberExtension", testOneMemberExtension),
     ]
 }
@@ -244,8 +259,12 @@ extension FunctionDeclTests {
         ("testBasicFunctionDeclarations_packArguments", testBasicFunctionDeclarations_packArguments),
         ("testBodilessFunctionDecl", testBodilessFunctionDecl),
         ("testBreaksBeforeOrInsideOutput", testBreaksBeforeOrInsideOutput),
+        ("testBreaksBeforeOrInsideOutput_prioritizingKeepingOutputTogether", testBreaksBeforeOrInsideOutput_prioritizingKeepingOutputTogether),
         ("testBreaksBeforeOrInsideOutputWithAttributes", testBreaksBeforeOrInsideOutputWithAttributes),
+        ("testBreaksBeforeOrInsideOutputWithAttributes_prioritizingKeepingOutputTogether", testBreaksBeforeOrInsideOutputWithAttributes_prioritizingKeepingOutputTogether),
         ("testBreaksBeforeOrInsideOutputWithWhereClause", testBreaksBeforeOrInsideOutputWithWhereClause),
+        ("testBreaksBeforeOrInsideOutputWithWhereClause_prioritizingKeepingOutputTogether", testBreaksBeforeOrInsideOutputWithWhereClause_prioritizingKeepingOutputTogether),
+        ("testDoesNotBreakInsideEmptyParens", testDoesNotBreakInsideEmptyParens),
         ("testDoesNotCollapseFunctionParameterAttributes", testDoesNotCollapseFunctionParameterAttributes),
         ("testDoesNotCollapseStackedFunctionParameterAttributes", testDoesNotCollapseStackedFunctionParameterAttributes),
         ("testEmptyFunction", testEmptyFunction),
@@ -253,9 +272,11 @@ extension FunctionDeclTests {
         ("testFunctionDeclReturns", testFunctionDeclReturns),
         ("testFunctionDeclThrows", testFunctionDeclThrows),
         ("testFunctionFullWrap", testFunctionFullWrap),
+        ("testFunctionFullWrap_lineBreakBeforeEachGenericRequirement", testFunctionFullWrap_lineBreakBeforeEachGenericRequirement),
         ("testFunctionGenericParameters_noPackArguments", testFunctionGenericParameters_noPackArguments),
         ("testFunctionGenericParameters_packArguments", testFunctionGenericParameters_packArguments),
         ("testFunctionWhereClause", testFunctionWhereClause),
+        ("testFunctionWhereClause_lineBreakBeforeEachGenericRequirement", testFunctionWhereClause_lineBreakBeforeEachGenericRequirement),
         ("testFunctionWithDefer", testFunctionWithDefer),
         ("testOperatorOverloads", testOperatorOverloads),
         ("testRemovesLineBreakBeforeOpenBraceUnlessAbsolutelyNecessary", testRemovesLineBreakBeforeOpenBraceUnlessAbsolutelyNecessary),
@@ -282,6 +303,7 @@ extension GuardStmtTests {
         ("testGuardStatement", testGuardStatement),
         ("testGuardWithFuncCall", testGuardWithFuncCall),
         ("testOpenBraceIsGluedToElseKeyword", testOpenBraceIsGluedToElseKeyword),
+        ("testOptionalBindingConditions", testOptionalBindingConditions),
     ]
 }
 
@@ -292,7 +314,10 @@ extension IfConfigTests {
     static let __allTests__IfConfigTests = [
         ("testBasicIfConfig", testBasicIfConfig),
         ("testIfConfigNoIndentation", testIfConfigNoIndentation),
+        ("testInvalidDiscretionaryLineBreaksRemoved", testInvalidDiscretionaryLineBreaksRemoved),
         ("testPoundIfAroundMembers", testPoundIfAroundMembers),
+        ("testPrettyPrintLineBreaksDisabled", testPrettyPrintLineBreaksDisabled),
+        ("testValidDiscretionaryLineBreaksRetained", testValidDiscretionaryLineBreaksRetained),
     ]
 }
 
@@ -302,6 +327,7 @@ extension IfStmtTests {
     // to regenerate.
     static let __allTests__IfStmtTests = [
         ("testConditionExpressionOperatorGrouping", testConditionExpressionOperatorGrouping),
+        ("testConditionExpressionOperatorGroupingMixedWithParentheses", testConditionExpressionOperatorGroupingMixedWithParentheses),
         ("testContinuationLineBreakIndentation", testContinuationLineBreakIndentation),
         ("testHangingOpenBreakIsTreatedLikeContinuation", testHangingOpenBreakIsTreatedLikeContinuation),
         ("testIfElseStatement_breakBeforeElse", testIfElseStatement_breakBeforeElse),
@@ -309,6 +335,20 @@ extension IfStmtTests {
         ("testIfLetStatements", testIfLetStatements),
         ("testIfStatement", testIfStatement),
         ("testMatchingPatternConditions", testMatchingPatternConditions),
+        ("testOptionalBindingConditions", testOptionalBindingConditions),
+    ]
+}
+
+extension IgnoreNodeTests {
+    // DO NOT MODIFY: This is autogenerated, use:
+    //   `swift test --generate-linuxmain`
+    // to regenerate.
+    static let __allTests__IgnoreNodeTests = [
+        ("testIgnoreInvalidAfterFirstToken", testIgnoreInvalidAfterFirstToken),
+        ("testIgnoreMemberDeclListItems", testIgnoreMemberDeclListItems),
+        ("testIgnoresNestedMembers", testIgnoresNestedMembers),
+        ("testInvalidComment", testInvalidComment),
+        ("testValidComment", testValidComment),
     ]
 }
 
@@ -332,9 +372,11 @@ extension InitializerDeclTests {
         ("testInitializerAttributes", testInitializerAttributes),
         ("testInitializerDeclThrows", testInitializerDeclThrows),
         ("testInitializerFullWrap", testInitializerFullWrap),
+        ("testInitializerFullWrap_lineBreakBeforeEachGenericRequirement", testInitializerFullWrap_lineBreakBeforeEachGenericRequirement),
         ("testInitializerGenericParameters", testInitializerGenericParameters),
         ("testInitializerOptionality", testInitializerOptionality),
         ("testInitializerWhereClause", testInitializerWhereClause),
+        ("testInitializerWhereClause_lineBreakBeforeEachGenericRequirement", testInitializerWhereClause_lineBreakBeforeEachGenericRequirement),
     ]
 }
 
@@ -373,6 +415,18 @@ extension NewlineTests {
     ]
 }
 
+extension ObjectLiteralExprTests {
+    // DO NOT MODIFY: This is autogenerated, use:
+    //   `swift test --generate-linuxmain`
+    // to regenerate.
+    static let __allTests__ObjectLiteralExprTests = [
+        ("testColorLiteral_noPackArguments", testColorLiteral_noPackArguments),
+        ("testColorLiteral_packArguments", testColorLiteral_packArguments),
+        ("testImageLiteral_noPackArguments", testImageLiteral_noPackArguments),
+        ("testImageLiteral_packArguments", testImageLiteral_packArguments),
+    ]
+}
+
 extension OperatorDeclTests {
     // DO NOT MODIFY: This is autogenerated, use:
     //   `swift test --generate-linuxmain`
@@ -380,6 +434,28 @@ extension OperatorDeclTests {
     static let __allTests__OperatorDeclTests = [
         ("testOperatorDecl", testOperatorDecl),
         ("testPrecedenceGroups", testPrecedenceGroups),
+    ]
+}
+
+extension ParenthesizedExprTests {
+    // DO NOT MODIFY: This is autogenerated, use:
+    //   `swift test --generate-linuxmain`
+    // to regenerate.
+    static let __allTests__ParenthesizedExprTests = [
+        ("testComplexConditionalWithParens", testComplexConditionalWithParens),
+        ("testExpressionStartsWithParentheses", testExpressionStartsWithParentheses),
+        ("testInitializerClauseParens", testInitializerClauseParens),
+        ("testNestedParentheses", testNestedParentheses),
+        ("testSequenceExprParens", testSequenceExprParens),
+    ]
+}
+
+extension PatternBindingTests {
+    // DO NOT MODIFY: This is autogenerated, use:
+    //   `swift test --generate-linuxmain`
+    // to regenerate.
+    static let __allTests__PatternBindingTests = [
+        ("testBindingIncludingTypeAnnotation", testBindingIncludingTypeAnnotation),
     ]
 }
 
@@ -393,7 +469,7 @@ extension ProtocolDeclTests {
         ("testEmptyProtocolWithComment", testEmptyProtocolWithComment),
         ("testOneMemberProtocol", testOneMemberProtocol),
         ("testProtocolAttributes", testProtocolAttributes),
-        ("testProtocolInheritence", testProtocolInheritence),
+        ("testProtocolInheritance", testProtocolInheritance),
         ("testProtocolWithAssociatedtype", testProtocolWithAssociatedtype),
         ("testProtocolWithFunctions", testProtocolWithFunctions),
         ("testProtocolWithInitializers", testProtocolWithInitializers),
@@ -445,6 +521,7 @@ extension SequenceExprFoldingTests {
         ("testCustomOperator", testCustomOperator),
         ("testDifferentOperatorsSamePrecedence", testDifferentOperatorsSamePrecedence),
         ("testMixedAssociativity", testMixedAssociativity),
+        ("testMixedCastsTriesAndTernaries", testMixedCastsTriesAndTernaries),
         ("testNestedTernary", testNestedTernary),
         ("testSimpleBinaryExprIsUnchanged", testSimpleBinaryExprIsUnchanged),
         ("testSimpleBinaryExprLeftAssociativity", testSimpleBinaryExprLeftAssociativity),
@@ -495,9 +572,12 @@ extension StructDeclTests {
         ("testOneMemberStruct", testOneMemberStruct),
         ("testStructAttributes", testStructAttributes),
         ("testStructFullWrap", testStructFullWrap),
-        ("testStructInheritence", testStructInheritence),
+        ("testStructFullWrap_lineBreakBeforeEachGenericRequirement", testStructFullWrap_lineBreakBeforeEachGenericRequirement),
+        ("testStructInheritance", testStructInheritance),
         ("testStructWhereClause", testStructWhereClause),
-        ("testStructWhereClauseWithInheritence", testStructWhereClauseWithInheritence),
+        ("testStructWhereClause_lineBreakBeforeEachGenericRequirement", testStructWhereClause_lineBreakBeforeEachGenericRequirement),
+        ("testStructWhereClauseWithInheritance", testStructWhereClauseWithInheritance),
+        ("testStructWhereClauseWithInheritance_lineBreakBeforeEachGenericRequirement", testStructWhereClauseWithInheritance_lineBreakBeforeEachGenericRequirement),
     ]
 }
 
@@ -507,12 +587,16 @@ extension SubscriptDeclTests {
     // to regenerate.
     static let __allTests__SubscriptDeclTests = [
         ("testBasicSubscriptDeclarations", testBasicSubscriptDeclarations),
+        ("testBreaksBeforeOrInsideOutput", testBreaksBeforeOrInsideOutput),
+        ("testBreaksBeforeOrInsideOutput_prioritizingKeepingOutputTogether", testBreaksBeforeOrInsideOutput_prioritizingKeepingOutputTogether),
         ("testEmptySubscript", testEmptySubscript),
         ("testSubscriptAttributes", testSubscriptAttributes),
         ("testSubscriptFullWrap", testSubscriptFullWrap),
+        ("testSubscriptFullWrap_lineBreakBeforeEachGenericRequirement", testSubscriptFullWrap_lineBreakBeforeEachGenericRequirement),
         ("testSubscriptGenerics_noPackArguments", testSubscriptGenerics_noPackArguments),
         ("testSubscriptGenerics_packArguments", testSubscriptGenerics_packArguments),
         ("testSubscriptGenericWhere", testSubscriptGenericWhere),
+        ("testSubscriptGenericWhere_lineBreakBeforeEachGenericRequirement", testSubscriptGenericWhere_lineBreakBeforeEachGenericRequirement),
     ]
 }
 
@@ -535,6 +619,7 @@ extension SwitchStmtTests {
     static let __allTests__SwitchStmtTests = [
         ("testBasicSwitch", testBasicSwitch),
         ("testNestedSwitch", testNestedSwitch),
+        ("testNewlinesDisambiguatingWhereClauses", testNewlinesDisambiguatingWhereClauses),
         ("testSwitchCases", testSwitchCases),
         ("testSwitchCompoundCases", testSwitchCompoundCases),
         ("testSwitchValueBinding", testSwitchValueBinding),
@@ -547,8 +632,11 @@ extension TernaryExprTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__TernaryExprTests = [
+        ("testExpressionStartsWithTernary", testExpressionStartsWithTernary),
+        ("testNestedTernaries", testNestedTernaries),
         ("testTernaryExprs", testTernaryExprs),
         ("testTernaryExprsWithMultiplePartChoices", testTernaryExprsWithMultiplePartChoices),
+        ("testTernaryWithWrappingExpressions", testTernaryWithWrappingExpressions),
     ]
 }
 
@@ -651,12 +739,16 @@ public func __allTests() -> [XCTestCaseEntry] {
         testCase(GuardStmtTests.__allTests__GuardStmtTests),
         testCase(IfConfigTests.__allTests__IfConfigTests),
         testCase(IfStmtTests.__allTests__IfStmtTests),
+        testCase(IgnoreNodeTests.__allTests__IgnoreNodeTests),
         testCase(ImportTests.__allTests__ImportTests),
         testCase(InitializerDeclTests.__allTests__InitializerDeclTests),
         testCase(MemberAccessExprTests.__allTests__MemberAccessExprTests),
         testCase(MemberTypeIdentifierTests.__allTests__MemberTypeIdentifierTests),
         testCase(NewlineTests.__allTests__NewlineTests),
+        testCase(ObjectLiteralExprTests.__allTests__ObjectLiteralExprTests),
         testCase(OperatorDeclTests.__allTests__OperatorDeclTests),
+        testCase(ParenthesizedExprTests.__allTests__ParenthesizedExprTests),
+        testCase(PatternBindingTests.__allTests__PatternBindingTests),
         testCase(ProtocolDeclTests.__allTests__ProtocolDeclTests),
         testCase(RepeatStmtTests.__allTests__RepeatStmtTests),
         testCase(RespectsExistingLineBreaksTests.__allTests__RespectsExistingLineBreaksTests),

@@ -123,6 +123,9 @@ public class GuardStmtTests: PrettyPrintTestCase {
         let anotherCastedObject = object as? SomeOtherSlightlyLongerType else {
         return nil
       }
+      guard let object1 = fetchingFunc(foo), let object2 = fetchingFunc(bar), let object3 = fetchingFunc(baz) else {
+        return nil
+      }
       """
 
     let expected =
@@ -149,6 +152,43 @@ public class GuardStmtTests: PrettyPrintTestCase {
       else {
         return nil
       }
+      guard let object1 = fetchingFunc(foo),
+        let object2 = fetchingFunc(bar),
+        let object3 = fetchingFunc(baz)
+      else {
+        return nil
+      }
+
+      """
+
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 40)
+  }
+
+  public func testOptionalBindingConditions() {
+    let input =
+      """
+      guard let someObject: Foo = object as? Int else {
+        return nil
+      }
+      guard let someObject: (foo: Foo, bar: SomeVeryLongTypeNameThatBreaks, baz: Baz) = foo(a, b, c, d) else { return nil }
+      """
+
+    let expected =
+      """
+      guard
+        let someObject: Foo = object as? Int
+      else {
+        return nil
+      }
+      guard
+        let someObject:
+          (
+            foo: Foo,
+            bar:
+              SomeVeryLongTypeNameThatBreaks,
+            baz: Baz
+          ) = foo(a, b, c, d)
+      else { return nil }
 
       """
 

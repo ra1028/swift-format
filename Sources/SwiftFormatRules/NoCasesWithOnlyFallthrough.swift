@@ -24,56 +24,82 @@ import SwiftSyntax
 /// - SeeAlso: https://google.github.io/swift#fallthrough-in-switch-statements
 public final class NoCasesWithOnlyFallthrough: SyntaxFormatRule {
 
-  public override func visit(_ node: SwitchStmtSyntax) -> StmtSyntax {
-    var newCases: [SwitchCaseSyntax] = []
-    var violations: [SwitchCaseLabelSyntax] = []
+  public override func visit(_ node: SwitchCaseListSyntax) -> Syntax {
+    var newChildren: [Syntax] = []
+    var fallthroughOnlyCases: [SwitchCaseSyntax] = []
 
-    for switchCase in node.cases {
-      guard let switchCase = switchCase as? SwitchCaseSyntax else { continue }
-      guard let label = switchCase.label as? SwitchCaseLabelSyntax else {
-        newCases.append(switchCase)
+    /// Flushes any un-collapsed violations to the new cases list.
+    func flushViolations() {
+      fallthroughOnlyCases.forEach {
+        newChildren.append(super.visit($0))
+      }
+      fallthroughOnlyCases.removeAll()
+    }
+
+    for element in node {
+      guard let switchCase = element as? SwitchCaseSyntax else {
+        // If the element isn't a `SwitchCaseSyntax`, it might be an `#if` block surrounding some
+        // conditional cases. Just add it to the list of new cases and then reset our current list
+        // of violations because this partitions the cases into sets that we can't merge between.
+        flushViolations()
+        newChildren.append(visit(element))
         continue
       }
 
-      if isFallthroughOnly(switchCase) {
+      if isFallthroughOnly(switchCase), let label = switchCase.label as? SwitchCaseLabelSyntax {
+        // If the case is fallthrough-only, store it as a violation that we will merge later.
         diagnose(.collapseCase(name: "\(label)"), on: switchCase)
-        violations.append(label)
+        fallthroughOnlyCases.append(switchCase)
       } else {
-        guard violations.count > 0 else {
-          newCases.append(switchCase)
+        guard !fallthroughOnlyCases.isEmpty else {
+          // If there are no violations recorded, just append the case. There's nothing we can try
+          // to merge into it.
+          newChildren.append(visit(switchCase))
           continue
         }
 
-        var collapsedCase: SwitchCaseSyntax;
-        if retrieveNumericCaseValue(caseLabel: label) != nil {
-          collapsedCase = collapseIntegerCases(
-            violations: violations,
-            validCaseLabel: label,
-            validCase: switchCase)
-        } else {
-          collapsedCase = collapseNonIntegerCases(
-            violations: violations,
-            validCaseLabel: label,
-            validCase: switchCase)
+        // If the case is not a `case ...`, then it must be a `default`. Under *most* circumstances,
+        // we could simply remove the immediately preceding `fallthrough`-only cases because they
+        // would end up falling through to the `default`, which would match them anyway. However,
+        // if any of the patterns in those cases have side effects, removing those cases would
+        // change the program's behavior. Nobody should ever write code like this, but we don't want
+        // to risk changing behavior just by reformatting.
+        guard switchCase.label is SwitchCaseLabelSyntax else {
+          flushViolations()
+          newChildren.append(visit(switchCase))
+          continue
         }
+
+        // We have a case that's not fallthrough-only, and a list of fallthrough-only cases before
+        // it. Merge them and add the result to the new list.
+        var newCase = mergedCase(violations: fallthroughOnlyCases, validCase: switchCase)
 
         // Only the first violation case can have displaced trivia, because any non-whitespace
         // trivia in the other violation cases would've prevented collapsing.
-        if let displacedLeadingTrivia = violations.first?.leadingTrivia?.withoutTrailingNewlines() {
-          let existingLeadingTrivia = collapsedCase.leadingTrivia ?? []
+        if let displacedLeadingTrivia =
+          fallthroughOnlyCases.first?.leadingTrivia?.withoutLastLine()
+        {
+          let existingLeadingTrivia = newCase.leadingTrivia ?? []
           let mergedLeadingTrivia = displacedLeadingTrivia + existingLeadingTrivia
-          collapsedCase = collapsedCase.withLeadingTrivia(mergedLeadingTrivia)
+          newCase = newCase.withLeadingTrivia(mergedLeadingTrivia)
         }
-        newCases.append(collapsedCase)
-        violations = []
+
+        newChildren.append(visit(newCase))
+        fallthroughOnlyCases.removeAll()
       }
     }
-    return node.withCases(SyntaxFactory.makeSwitchCaseList(newCases))
+
+    // Flush violations at the end of a list so we don't lose cases that won't get merged with
+    // anything.
+    flushViolations()
+
+    return SyntaxFactory.makeSwitchCaseList(newChildren)
   }
 
   /// Returns whether the given `SwitchCaseSyntax` contains only a fallthrough statement.
+  ///
   /// - Parameter switchCase: A syntax node describing a case in a switch statement.
-  func isFallthroughOnly(_ switchCase: SwitchCaseSyntax) -> Bool {
+  private func isFallthroughOnly(_ switchCase: SwitchCaseSyntax) -> Bool {
     // When there are any additional or non-fallthrough statements, it isn't only a fallthrough.
     guard let onlyStatement = switchCase.statements.firstAndOnly,
       onlyStatement.item is FallthroughStmtSyntax
@@ -103,96 +129,31 @@ public final class NoCasesWithOnlyFallthrough: SyntaxFormatRule {
     return true
   }
 
-  // Puts all given cases on one line with range operator or commas
-  func collapseIntegerCases(
-    violations: [SwitchCaseLabelSyntax],
-    validCaseLabel: SwitchCaseLabelSyntax, validCase: SwitchCaseSyntax
-  ) -> SwitchCaseSyntax {
-    var isConsecutive = true
-    var index = 0
-    var caseNums: [Int] = []
-
-    for item in violations {
-      guard let caseNum = retrieveNumericCaseValue(caseLabel: item) else { continue }
-      caseNums.append(caseNum)
-    }
-
-    guard let validCaseNum = retrieveNumericCaseValue(caseLabel: validCaseLabel) else {
-      return validCase
-    }
-    caseNums.append(validCaseNum)
-
-    while index <= caseNums.count - 2, isConsecutive {
-      isConsecutive = caseNums[index] + 1 == caseNums[index + 1]
-      index += 1
-    }
-
+  /// Returns a copy of the given valid case (and its statements) but with the case items from the
+  /// violations merged with its own case items.
+  private func mergedCase(violations: [SwitchCaseSyntax], validCase: SwitchCaseSyntax)
+    -> SwitchCaseSyntax
+  {
     var newCaseItems: [CaseItemSyntax] = []
-    let first = caseNums[0]
-    let last = caseNums[caseNums.count - 1]
-    if isConsecutive {
-      // Create a case with a sequence expression based on the new range
-      let start = SyntaxFactory.makeIntegerLiteralExpr(
-        digits: SyntaxFactory.makeIntegerLiteral("\(first)"))
-      let end = SyntaxFactory.makeIntegerLiteralExpr(
-        digits: SyntaxFactory.makeIntegerLiteral("\(last)"))
-      let newExpList = SyntaxFactory.makeExprList(
-        [
-          start,
-          SyntaxFactory.makeBinaryOperatorExpr(
-            operatorToken:
-              SyntaxFactory.makeUnspacedBinaryOperator("...")),
-          end,
-        ])
-      let newExpPat = SyntaxFactory.makeExpressionPattern(
-        expression: SyntaxFactory.makeSequenceExpr(elements: newExpList))
+
+    for label in violations.lazy.compactMap({ $0.label as? SwitchCaseLabelSyntax }) {
+      let caseItems = Array(label.caseItems)
+
+      // We can blindly append all but the last case item because they must already have a trailing
+      // comma. Then, we need to add a trailing comma to the last one, since it will be followed by
+      // more items.
+      newCaseItems.append(contentsOf: caseItems.dropLast())
       newCaseItems.append(
-        SyntaxFactory.makeCaseItem(pattern: newExpPat, whereClause: nil, trailingComma: nil))
-    } else {
-      // Add each case item separated by a comma
-      for num in caseNums {
-        let newExpPat = SyntaxFactory.makeExpressionPattern(
-          expression: SyntaxFactory.makeIntegerLiteralExpr(
-            digits: SyntaxFactory.makeIntegerLiteral("\(num)")))
-        let trailingComma = SyntaxFactory.makeCommaToken(trailingTrivia: .spaces(1))
-        let newCaseItem = SyntaxFactory.makeCaseItem(
-          pattern: newExpPat,
-          whereClause: nil,
-          trailingComma: num == last ? nil : trailingComma
-        )
-        newCaseItems.append(newCaseItem)
-      }
+        caseItems.last!.withTrailingComma(
+          SyntaxFactory.makeCommaToken(trailingTrivia: .spaces(1))))
     }
-    let caseItemList = SyntaxFactory.makeCaseItemList(newCaseItems)
-    return validCase.withLabel(validCaseLabel.withCaseItems(caseItemList))
-  }
 
-  // Gets integer value from case label, if possible
-  func retrieveNumericCaseValue(caseLabel: SwitchCaseLabelSyntax) -> Int? {
-    if let firstTok = caseLabel.caseItems.firstToken, let num = Int(firstTok.text) {
-      return num
-    }
-    return nil
-  }
+    let validCaseLabel = validCase.label as! SwitchCaseLabelSyntax
+    newCaseItems.append(contentsOf: validCaseLabel.caseItems)
 
-  // Puts all given cases on one line separated by commas
-  func collapseNonIntegerCases(
-    violations: [SwitchCaseLabelSyntax],
-    validCaseLabel: SwitchCaseLabelSyntax, validCase: SwitchCaseSyntax
-  ) -> SwitchCaseSyntax {
-    var newCaseItems: [CaseItemSyntax] = []
-    for violation in violations {
-      for item in violation.caseItems {
-        let newCaseItem = item.withTrailingComma(
-          SyntaxFactory.makeCommaToken(trailingTrivia: .spaces(1)))
-        newCaseItems.append(newCaseItem)
-      }
-    }
-    for item in validCaseLabel.caseItems {
-      newCaseItems.append(item)
-    }
-    let caseItemList = SyntaxFactory.makeCaseItemList(newCaseItems)
-    return validCase.withLabel(validCaseLabel.withCaseItems(caseItemList))
+    return validCase.withLabel(
+      validCaseLabel.withCaseItems(
+        SyntaxFactory.makeCaseItemList(newCaseItems)))
   }
 }
 

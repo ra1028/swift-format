@@ -147,7 +147,7 @@ public class IfStmtTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeControlFlowKeywords = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 20, configuration: config)
   }
@@ -232,6 +232,9 @@ public class IfStmtTests: PrettyPrintTestCase {
         let anotherCastedObject = object as? SomeOtherSlightlyLongerType {
         return nil
       }
+      if let object1 = fetchingFunc(foo), let object2 = fetchingFunc(bar), let object3 = fetchingFunc(baz) {
+        return nil
+      }
       """
 
     let expected =
@@ -254,6 +257,12 @@ public class IfStmtTests: PrettyPrintTestCase {
         foo, bar, baz, quxxe, far, fab, faz),
         let anotherCastedObject = object
           as? SomeOtherSlightlyLongerType
+      {
+        return nil
+      }
+      if let object1 = fetchingFunc(foo),
+        let object2 = fetchingFunc(bar),
+        let object3 = fetchingFunc(baz)
       {
         return nil
       }
@@ -315,5 +324,67 @@ public class IfStmtTests: PrettyPrintTestCase {
       """
 
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50)
+  }
+
+  public func testConditionExpressionOperatorGroupingMixedWithParentheses() {
+    let input =
+      """
+      if (someObj is SuperVerboselyNamedType || someObj is AnotherPrettyLongType  || someObjc == "APlainString" || someObj == 4) {
+        // do something
+      }
+      if (someVeryLongFirstCondition || (aCombination + ofVariousVariables + andOperators - thatBreak * onto % differentLines) || anotherPrettyLongCondition || thatBinPacks) {
+        // do something else
+      }
+      """
+
+    let expected =
+      """
+      if (someObj is SuperVerboselyNamedType
+        || someObj is AnotherPrettyLongType
+        || someObjc == "APlainString" || someObj == 4)
+      {
+        // do something
+      }
+      if (someVeryLongFirstCondition
+        || (aCombination + ofVariousVariables
+          + andOperators - thatBreak * onto
+          % differentLines)
+        || anotherPrettyLongCondition || thatBinPacks)
+      {
+        // do something else
+      }
+
+      """
+
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 50)
+  }
+
+  public func testOptionalBindingConditions() {
+    let input =
+      """
+      if let someObject: Foo = object as? Int {
+        return nil
+      }
+      if let someObject: (foo: Foo, bar: SomeVeryLongTypeNameThatDefinitelyBreaks, baz: Baz) = foo(a, b, c, d) { return nil }
+      """
+
+    let expected =
+      """
+      if let someObject: Foo = object as? Int
+      {
+        return nil
+      }
+      if let someObject:
+        (
+          foo: Foo,
+          bar:
+            SomeVeryLongTypeNameThatDefinitelyBreaks,
+          baz: Baz
+        ) = foo(a, b, c, d)
+      { return nil }
+
+      """
+
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 40)
   }
 }

@@ -179,7 +179,8 @@ public class CommentTests: PrettyPrintTestCase {
       default: ()
       }
 
-      let a = 123 +  // comment
+      let a =
+        123 +  // comment
         b + c
 
       let d = 123

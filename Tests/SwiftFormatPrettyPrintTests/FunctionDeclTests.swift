@@ -42,7 +42,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -85,7 +85,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -129,7 +129,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -174,7 +174,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
@@ -221,7 +221,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 40, configuration: config)
   }
@@ -267,7 +267,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 40, configuration: config)
   }
@@ -289,6 +289,14 @@ public class FunctionDeclTests: PrettyPrintTestCase {
         let a = 123
         let b = "abc"
       }
+
+      public func index<Elements: Collection, Element>(
+        of element: Element,
+        in collection: Elements
+      ) -> Elements.Index? where Elements.Element == Element, Element: Equatable, Element: ReallyLongProtocolName {
+        let a = 123
+        let b = "abc"
+      }
       """
 
     let expected =
@@ -305,8 +313,20 @@ public class FunctionDeclTests: PrettyPrintTestCase {
         of element: Element,
         in collection: Elements
       ) -> Elements.Index?
-      where Elements.Element == Element,
-        Element: Equatable
+      where
+        Elements.Element == Element, Element: Equatable
+      {
+        let a = 123
+        let b = "abc"
+      }
+
+      public func index<Elements: Collection, Element>(
+        of element: Element,
+        in collection: Elements
+      ) -> Elements.Index?
+      where
+        Elements.Element == Element, Element: Equatable,
+        Element: ReallyLongProtocolName
       {
         let a = 123
         let b = "abc"
@@ -314,8 +334,78 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
+  }
+
+  public func testFunctionWhereClause_lineBreakBeforeEachGenericRequirement() {
+    let input =
+    """
+      public func index<Elements: Collection, Element>(
+        of element: Element, in collection: Elements
+      ) -> Elements.Index? where Elements.Element == Element {
+        let a = 123
+        let b = "abc"
+      }
+
+      public func index<Elements: Collection, Element>(
+        of element: Element,
+        in collection: Elements
+      ) -> Elements.Index? where Elements.Element == Element, Element: Equatable {
+        let a = 123
+        let b = "abc"
+      }
+
+      public func index<Elements: Collection, Element>(
+        of element: Element,
+        in collection: Elements
+      ) -> Elements.Index? where Elements.Element == Element, Element: Equatable, Element: ReallyLongProtocolName {
+        let a = 123
+        let b = "abc"
+      }
+      """
+
+    let expected =
+    """
+      public func index<Elements: Collection, Element>(
+        of element: Element, in collection: Elements
+      ) -> Elements.Index?
+      where Elements.Element == Element {
+        let a = 123
+        let b = "abc"
+      }
+
+      public func index<Elements: Collection, Element>(
+        of element: Element,
+        in collection: Elements
+      ) -> Elements.Index?
+      where
+        Elements.Element == Element,
+        Element: Equatable
+      {
+        let a = 123
+        let b = "abc"
+      }
+
+      public func index<Elements: Collection, Element>(
+        of element: Element,
+        in collection: Elements
+      ) -> Elements.Index?
+      where
+        Elements.Element == Element,
+        Element: Equatable,
+        Element: ReallyLongProtocolName
+      {
+        let a = 123
+        let b = "abc"
+      }
+
+      """
+
+    var config = Configuration()
+    config.lineBreakBeforeEachArgument = false
+    config.lineBreakBeforeEachGenericRequirement = true
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 50, configuration: config)
   }
 
@@ -450,7 +540,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
     let input =
     """
     @discardableResult @objc
-    public func index<Elements: Collection, Element>(of element: Element, in collection: Elements) -> Elements.Index? where Elements.Element == Element, Element: Equatable {
+    public func index<Elements: Collection, Element>(of element: Element, in collection: Elements) -> Elements.Index? where Element: Foo, Element: Bar, Elements.Element == Element  {
       let a = 123
       let b = "abc"
     }
@@ -467,8 +557,8 @@ public class FunctionDeclTests: PrettyPrintTestCase {
       in collection: Elements
     ) -> Elements.Index?
     where
-      Elements.Element == Element,
-      Element: Equatable
+      Element: Foo, Element: Bar,
+      Elements.Element == Element
     {
       let a = 123
       let b = "abc"
@@ -477,6 +567,42 @@ public class FunctionDeclTests: PrettyPrintTestCase {
     """
 
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 30)
+  }
+
+  public func testFunctionFullWrap_lineBreakBeforeEachGenericRequirement() {
+    let input =
+    """
+    @discardableResult @objc
+    public func index<Elements: Collection, Element>(of element: Element, in collection: Elements) -> Elements.Index? where Element: Foo, Element: Bar, Elements.Element == Element  {
+      let a = 123
+      let b = "abc"
+    }
+    """
+
+    let expected =
+    """
+    @discardableResult @objc
+    public func index<
+      Elements: Collection,
+      Element
+    >(
+      of element: Element,
+      in collection: Elements
+    ) -> Elements.Index?
+    where
+      Element: Foo,
+      Element: Bar,
+      Elements.Element == Element
+    {
+      let a = 123
+      let b = "abc"
+    }
+
+    """
+
+    var config = Configuration()
+    config.lineBreakBeforeEachGenericRequirement = true
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 30, configuration: config)
   }
 
   public func testEmptyFunction() {
@@ -494,19 +620,42 @@ public class FunctionDeclTests: PrettyPrintTestCase {
   public func testOperatorOverloads() {
     let input =
       """
-      func < (lhs: Position, rhs: Position) -> Bool {
-        foo()
-      }
-
-      func + (left: [Int], right: [Int]) -> [Int] {
-        foo()
-      }
-
-      func ⊕ (left: Tensor, right: Tensor) -> Tensor {
-        foo()
+      struct X {
+        static func + (lhs: X, rhs: X) -> X {}
+        static func +(lhs: X, rhs: X) -> X {}
+        static func ⊕ (lhs: X, rhs: X) -> X {}
+        static func ⊕(lhs: X, rhs: X) -> X {}
+        static func * <T>(lhs: X, rhs: T) -> T {}
+        static func *<T>(lhs: X, rhs: T) -> T {}
       }
       """
-    assertPrettyPrintEqual(input: input, expected: input + "\n", linelength: 50)
+
+    let expected =
+      """
+      struct X {
+        static func + (
+          lhs: X, rhs: X
+        ) -> X {}
+        static func + (
+          lhs: X, rhs: X
+        ) -> X {}
+        static func ⊕ (
+          lhs: X, rhs: X
+        ) -> X {}
+        static func ⊕ (
+          lhs: X, rhs: X
+        ) -> X {}
+        static func * <T>(
+          lhs: X, rhs: T
+        ) -> T {}
+        static func * <T>(
+          lhs: X, rhs: T
+        ) -> T {}
+      }
+
+      """
+
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 20)
   }
 
   public func testBreaksBeforeOrInsideOutput() {
@@ -552,6 +701,53 @@ public class FunctionDeclTests: PrettyPrintTestCase {
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 33)
   }
 
+  public func testBreaksBeforeOrInsideOutput_prioritizingKeepingOutputTogether() {
+    let input =
+    """
+      func name<R>(_ x: Int) throws -> R
+
+      func name<R>(_ x: Int) throws -> R {
+        statement
+        statement
+      }
+      """
+
+    var expected =
+    """
+      func name<R>(
+        _ x: Int
+      ) throws -> R
+
+      func name<R>(
+        _ x: Int
+      ) throws -> R {
+        statement
+        statement
+      }
+
+      """
+    var config = Configuration()
+    config.prioritizeKeepingFunctionOutputTogether = true
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 23, configuration: config)
+
+    expected =
+    """
+    func name<R>(
+      _ x: Int
+    ) throws -> R
+
+    func name<R>(
+      _ x: Int
+    ) throws -> R {
+      statement
+      statement
+    }
+
+    """
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 30, configuration: config)
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 33, configuration: config)
+  }
+
   public func testBreaksBeforeOrInsideOutputWithAttributes() {
     let input =
       """
@@ -583,6 +779,42 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 23)
+  }
+
+  public func testBreaksBeforeOrInsideOutputWithAttributes_prioritizingKeepingOutputTogether() {
+    let input =
+    """
+      @objc @discardableResult
+      func name<R>(_ x: Int) throws -> R
+
+      @objc @discardableResult
+      func name<R>(_ x: Int) throws -> R {
+        statement
+        statement
+      }
+      """
+
+    let expected =
+    """
+      @objc
+      @discardableResult
+      func name<R>(
+        _ x: Int
+      ) throws -> R
+
+      @objc
+      @discardableResult
+      func name<R>(
+        _ x: Int
+      ) throws -> R {
+        statement
+        statement
+      }
+
+      """
+    var config = Configuration()
+    config.prioritizeKeepingFunctionOutputTogether = true
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 23, configuration: config)
   }
 
   public func testBreaksBeforeOrInsideOutputWithWhereClause() {
@@ -642,6 +874,69 @@ public class FunctionDeclTests: PrettyPrintTestCase {
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 23)
   }
 
+  public func testBreaksBeforeOrInsideOutputWithWhereClause_prioritizingKeepingOutputTogether() {
+    var input =
+    """
+      func name<R>(_ x: Int) throws -> R where Foo == Bar
+
+      func name<R>(_ x: Int) throws -> R where Foo == Bar {
+        statement
+        statement
+      }
+      """
+
+    var expected =
+    """
+      func name<R>(
+        _ x: Int
+      ) throws -> R
+      where Foo == Bar
+
+      func name<R>(
+        _ x: Int
+      ) throws -> R
+      where Foo == Bar {
+        statement
+        statement
+      }
+
+      """
+    var config = Configuration()
+    config.prioritizeKeepingFunctionOutputTogether = true
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 23, configuration: config)
+
+    input =
+    """
+    func name<R>(_ x: Int) throws -> R where Fooooooo == Barrrrr
+
+    func name<R>(_ x: Int) throws -> R where Fooooooo == Barrrrr {
+    statement
+    statement
+    }
+    """
+
+    expected =
+    """
+    func name<R>(
+      _ x: Int
+    ) throws -> R
+    where
+      Fooooooo == Barrrrr
+
+    func name<R>(
+      _ x: Int
+    ) throws -> R
+    where
+      Fooooooo == Barrrrr
+    {
+      statement
+      statement
+    }
+
+    """
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 23, configuration: config)
+  }
+
   public func testAttributedTypes() {
     let input =
       """
@@ -667,7 +962,7 @@ public class FunctionDeclTests: PrettyPrintTestCase {
 
       """
 
-    let config = Configuration()
+    var config = Configuration()
     config.lineBreakBeforeEachArgument = false
     assertPrettyPrintEqual(input: input, expected: expected, linelength: 35, configuration: config)
   }
@@ -723,5 +1018,25 @@ public class FunctionDeclTests: PrettyPrintTestCase {
     """
 
     assertPrettyPrintEqual(input: input, expected: input, linelength: 80)
+  }
+
+  func testDoesNotBreakInsideEmptyParens() {
+    // If the function name is so long that the parentheses of a no-argument parameter list would
+    // be pushed past the margin, don't break inside them.
+    let input =
+      """
+      func fooBarBaz() {}
+
+      """
+
+    let expected =
+      """
+      func
+        fooBarBaz()
+      {}
+
+      """
+
+    assertPrettyPrintEqual(input: input, expected: expected, linelength: 14)
   }
 }

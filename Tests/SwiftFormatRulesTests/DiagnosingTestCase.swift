@@ -38,9 +38,11 @@ public class DiagnosingTestCase: XCTestCase {
   }
 
   /// Creates and returns a new `Context` from the given syntax tree.
-  private func makeContext(sourceFileSyntax: SourceFileSyntax) -> Context {
+  private func makeContext(sourceFileSyntax: SourceFileSyntax, configuration: Configuration? = nil)
+    -> Context
+  {
     let context = Context(
-      configuration: Configuration(),
+      configuration: configuration ?? Configuration(),
       diagnosticEngine: DiagnosticEngine(),
       fileURL: URL(fileURLWithPath: "/tmp/test.swift"),
       sourceFileSyntax: sourceFileSyntax)
@@ -70,10 +72,10 @@ public class DiagnosingTestCase: XCTestCase {
       return
     }
 
-    self.context = makeContext(sourceFileSyntax: sourceFileSyntax)
-
     // Force the rule to be enabled while we test it.
-    context!.configuration.rules[type.ruleName] = true
+    var configuration = Configuration()
+    configuration.rules[type.ruleName] = true
+    self.context = makeContext(sourceFileSyntax: sourceFileSyntax, configuration: configuration)
 
     // If we're linting, then indicate that we want to fail for unasserted diagnostics when the test
     // is torn down.
@@ -101,7 +103,8 @@ public class DiagnosingTestCase: XCTestCase {
     expected: String,
     file: StaticString = #file,
     line: UInt = #line,
-    checkForUnassertedDiagnostics: Bool = false
+    checkForUnassertedDiagnostics: Bool = false,
+    configuration: Configuration? = nil
   ) {
     let sourceFileSyntax: SourceFileSyntax
     do {
@@ -111,10 +114,10 @@ public class DiagnosingTestCase: XCTestCase {
       return
     }
 
-    context = makeContext(sourceFileSyntax: sourceFileSyntax)
-
     // Force the rule to be enabled while we test it.
-    context!.configuration.rules[formatType.ruleName] = true
+    var configuration = configuration ?? Configuration()
+    configuration.rules[formatType.ruleName] = true
+    context = makeContext(sourceFileSyntax: sourceFileSyntax, configuration: configuration)
 
     shouldCheckForUnassertedDiagnostics = checkForUnassertedDiagnostics
     let formatter = formatType.init(context: context!)
