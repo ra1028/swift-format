@@ -137,7 +137,7 @@ let package = Package(
 if getenv("SWIFTCI_USE_LOCAL_DEPS") == nil {
   // Building standalone.
   package.dependencies += [
-    .package(url: "https://github.com/apple/swift-syntax", .revision("swift-5.3-DEVELOPMENT-SNAPSHOT-2020-07-04-a")),
+    .package(url: "https://github.com/apple/swift-syntax", .revision("swift-5.3-DEVELOPMENT-SNAPSHOT-2020-08-04-a")),
     .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMinor(from: "0.2.0")),
   ]
 } else {
